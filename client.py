@@ -17,7 +17,7 @@ class EmailClient:
         if connection[0] != "OK":
             print("ERROR CONNECTING TO EMAIL")
 
-    def GetEmails(self):
+    def GetEmailsId(self):
         if self.client is None:
             raise RuntimeError("Cannot establish client")
 
@@ -26,7 +26,12 @@ class EmailClient:
         _, mail = self.client.search(None, "ALL")
         mailId = mail[0].split()
 
-        for id in mailId:
+        return mailId
+
+    def GetEmailContent(self, id):
+        if self.client is None:
+            raise RuntimeError("Email client not established")
+        try:
             _, content = self.client.fetch(id, "(RFC822)")
 
             if content is None:
@@ -46,3 +51,8 @@ class EmailClient:
 
             stringContent = content[0][1].decode("utf-8")
             headers = Parser(policy=default).parsestr(stringContent)
+
+            return headers
+
+        except Exception as e:
+            print(e)
