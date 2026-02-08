@@ -11,24 +11,24 @@ class EmailClient:
         self.port: int = 993
         self.client: imaplib.IMAP4_SSL | None = None
 
-    def Connect(self):
+    def connect(self):
         self.client = imaplib.IMAP4_SSL(self.server, self.port)
         connection = self.client.login(self.address, self.password)
         if connection[0] != "OK":
             print("ERROR CONNECTING TO EMAIL")
 
-    def GetEmailsId(self):
+    def get_email_ids(self):
         if self.client is None:
             raise RuntimeError("Cannot establish client")
 
         _ = self.client.select("INBOX", readonly=True)
 
-        _, mail = self.client.search(None, "ALL")
+        _, mail = self.client.search(None, '(SUBJECT "application")')
         mailId = mail[0].split()
 
         return mailId
 
-    def GetEmailContent(self, id):
+    def get_email_content(self, id):
         if self.client is None:
             raise RuntimeError("Email client not established")
         try:
