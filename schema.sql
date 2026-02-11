@@ -1,27 +1,24 @@
 -- Used Claude Code as reference 
 
-DROP TABLE IF EXIST applications CASCADE;
-DROP TABLE IF EXIST companies CASCADE;
+DROP TABLE IF EXISTS applications CASCADE;
+DROP TABLE IF EXISTS company CASCADE;
 
-CREATE TYPE status AS ENUM('pending','rejected','offered','applied')
+CREATE TYPE status AS ENUM('pending','rejected','offered','applied');
 
+CREATE TABLE company (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE
+);
 CREATE TABLE applications (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     company INTEGER REFERENCES company(id) ON DELETE CASCADE,
     application_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    update_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    aplication_status status DEFAULT 'applied'
+    update_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    application_status status DEFAULT 'applied'
 );
 
-CREATE TABLE company (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL
-    from VARCHAR(255) NOT NULL
-    subject VARCHAR(255) NOT NULL
-);
 
-CREATE INDEX idx_application_status ON applications(status)
-CREATE INDEX idx_application_company ON applications(company)
-CREATE INDEX idx_application_status ON applications(status)
+CREATE INDEX idx_application_status ON applications(application_status);
+CREATE INDEX idx_application_company ON applications(company);
 

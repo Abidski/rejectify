@@ -32,9 +32,9 @@ def main():
 
                 if parser.is_application(email):
                     # if parser.is_rejection(email):
-                    # print("Rejection " + email["from"])
+                    #   print("Rejection " + email["from"])
                     # else:
-                    # print("Application " + email["from"])
+                    #    print("Application " + email["from"])
                     db.add_application(email)
 
         else:

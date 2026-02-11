@@ -5,21 +5,25 @@ from bs4 import BeautifulSoup
 
 
 class EmailParser:
-    def __init__(self):
-        # Keywords from claude code
-        self.keywords = {
-            "application": [
-                r"application",
-                r"applying",
-                r"apply",
-            ],
-            "rejection": [
-                r"regret",
-                r"unfortunately",
-            ],
-        }
+    keywords = {
+        "application": [
+            r"application",
+            r"applying",
+            r"apply",
+        ],
+        "rejection": [
+            r"regret",
+            r"unfortunately",
+        ],
+        "company": [
+            r"is",
+            r"at",
+            r"with",
+        ],
+    }
 
-    def parse_email(self, email: EmailMessage):
+    @staticmethod
+    def parse_email(email: EmailMessage):
         subject = email["subject"]
         from_ = email["from"]
         body = ""
@@ -51,30 +55,61 @@ class EmailParser:
             "date": date,
         }
 
-    def is_application(self, email):
-        for word in self.keywords["application"]:
+    @staticmethod
+    def is_application(email):
+        for word in EmailParser.keywords["application"]:
             if re.search(word, email["subject"].lower()):
                 return True
 
         return False
 
-    def is_rejection(self, email):
-        for word in self.keywords["rejection"]:
+    @staticmethod
+    def is_rejection(email):
+        for word in EmailParser.keywords["rejection"]:
             if re.search(word, email["body"][:1000].lower()):
                 return True
 
         return False
 
     @staticmethod
-    def get_company_name_from_email(from_):
-        index = from_.find(".")
-        company_name = from_[0:index].strip()
-        return company_name.lower()
+    def get_company_name_from_email(email, from_, fullFrom):
+        text = email["body"]
+        if "greenhouse" in from_:
+            match = re.search(r"\bin\s+", text, re.IGNORECASE)
+            # Help from claude code
+            if not match:
+                raise Exception("Error finding company in email body")
+            text_after = text[match.end() :]
+
+            capital_match = re.search(r"([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)", text_after)
+            if not capital_match:
+                raise Exception("Error finding company in email body")
+            name = capital_match.group(1)
+        else:
+            at = from_.find("@")
+            dot = from_.find(".")
+            if dot == -1:
+                return from_
+            if "workday" in from_:
+                name = from_[:at]
+            else:
+                name = from_[at + 1 : dot]
+        return name
 
     @staticmethod
-    def get_company(from_):
+    def get_company(email, from_):
         index = from_.find("<")
-        company_name = from_[0:index].strip()
+        if index != -1:
+            company_name = from_[0:index].strip().strip('"')
+        else:
+            company_name = from_.strip().strip('"')
         if "@" in company_name:
-            get_company_from_email(from_)
-        return company_name.lower()
+            clean_name = EmailParser.get_company_name_from_email(
+                email, company_name, from_
+            )
+        else:
+            clean_name = re.sub(
+                r"notifications?:?", "", company_name, flags=re.IGNORECASE
+            ).strip()
+
+        return clean_name.lower()
