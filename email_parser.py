@@ -1,26 +1,18 @@
-import re
+import json
+import os
 from email.message import EmailMessage
 
+import requests
 from bs4 import BeautifulSoup
+from dotenv import load_dotenv
 
 
 class EmailParser:
-    keywords = {
-        "application": [
-            r"application",
-            r"applying",
-            r"apply",
-        ],
-        "rejection": [
-            r"regret",
-            r"unfortunately",
-        ],
-        "company": [
-            r"is",
-            r"at",
-            r"with",
-        ],
-    }
+    load_dotenv()
+
+    def __init__(self):
+        self.url = os.getenv("OLLAMA_URL")
+        self.model = os.getenv("MODEL")
 
     @staticmethod
     def parse_email(email: EmailMessage):
@@ -55,61 +47,38 @@ class EmailParser:
             "date": date,
         }
 
-    @staticmethod
-    def is_application(email):
-        for word in EmailParser.keywords["application"]:
-            if re.search(word, email["subject"].lower()):
-                return True
+    def get_info(self, email):
+        prompt = f"""Give me the company name of this job application. Respond with ONLY valid JSON.
 
-        return False
+            From: {email["from"]}
+            Subject: {email["subject"]}
+            Body: {email["body"][:800]}
 
-    @staticmethod
-    def is_rejection(email):
-        for word in EmailParser.keywords["rejection"]:
-            if re.search(word, email["body"][:1000].lower()):
-                return True
+            JSON format:
+            {{
+                "is_application": true/false,
+                "is_rejection": true/false,
+                "position_title": "title or null",
+                "company_name": "actual company name or null",
+                "status": "applied|rejected|interview|offer|unknown"
+            }}"""
 
-        return False
+        response = requests.post(
+            f"{self.url}/api/generate",
+            json={
+                "model": self.model,
+                "prompt": prompt,
+                "stream": False,
+                "format": "json",
+                "options": {"temperature": 0.1, "num_predict": 300},
+            },
+            timeout=120,
+        )
+        # print(prompt)
 
-    @staticmethod
-    def get_company_name_from_email(email, from_, fullFrom):
-        text = email["body"]
-        if "greenhouse" in from_:
-            match = re.search(r"\bin\s+", text, re.IGNORECASE)
-            # Help from claude code
-            if not match:
-                raise Exception("Error finding company in email body")
-            text_after = text[match.end() :]
+        if response.status_code != 200:
+            raise Exception("Error from request to llm")
 
-            capital_match = re.search(r"([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)", text_after)
-            if not capital_match:
-                raise Exception("Error finding company in email body")
-            name = capital_match.group(1)
-        else:
-            at = from_.find("@")
-            dot = from_.find(".")
-            if dot == -1:
-                return from_
-            if "workday" in from_:
-                name = from_[:at]
-            else:
-                name = from_[at + 1 : dot]
-        return name
+        raw_data = response.json()["response"]
 
-    @staticmethod
-    def get_company(email, from_):
-        index = from_.find("<")
-        if index != -1:
-            company_name = from_[0:index].strip().strip('"')
-        else:
-            company_name = from_.strip().strip('"')
-        if "@" in company_name:
-            clean_name = EmailParser.get_company_name_from_email(
-                email, company_name, from_
-            )
-        else:
-            clean_name = re.sub(
-                r"notifications?:?", "", company_name, flags=re.IGNORECASE
-            ).strip()
-
-        return clean_name.lower()
+        return json.loads(raw_data)

@@ -12,6 +12,8 @@ class ApplicationDB:
     def add_application(self, email):
         company = email["from"]
         company_name = EmailParser.get_company(email, company)
+        position = EmailParser.get_position(email["body"])
+        print(position)
         self.cur.execute("SELECT name FROM company WHERE name = %s", (company_name,))
         result = self.cur.fetchone()
         if result is None:

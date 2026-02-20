@@ -30,12 +30,9 @@ def main():
                 parser = EmailParser()
                 email = parser.parse_email(raw)
 
-                if parser.is_application(email):
-                    # if parser.is_rejection(email):
-                    #   print("Rejection " + email["from"])
-                    # else:
-                    #    print("Application " + email["from"])
-                    db.add_application(email)
+                info = parser.get_info(email)
+                if info.get("is_application"):
+                    print(info)
 
         else:
             print("Env error")
