@@ -8,12 +8,11 @@ CREATE TYPE status AS ENUM('pending', 'rejected', 'offered', 'applied', 'intervi
 
 CREATE TABLE company (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL
+    name VARCHAR(255) NOT NULL,
     UNIQUE(name)
 );
 CREATE TABLE applications (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
     company_id INTEGER REFERENCES company(id) ON DELETE CASCADE,
     application_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     update_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

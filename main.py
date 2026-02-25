@@ -13,11 +13,17 @@ address = os.getenv("EMAIL_ADDRESS")
 password = os.getenv("EMAIL_PASSWORD")
 server = os.getenv("SERVER")
 
+dbname = os.getenv("DBNAME")
+dbuser = os.getenv("DBUSER")
+dbpassword = os.getenv("DBPASSWORD")
+dbhost = os.getenv("DBHOST")
+dbport = os.getenv("DBPORT")
+
 
 def main():
     try:
         if address and password and server:
-            db = ApplicationDB()
+            db = ApplicationDB(dbname, dbuser, dbpassword, dbhost, dbport)
             client = EmailClient(address, password, server)
             client.connect()
             ids = client.get_email_ids()
@@ -25,6 +31,8 @@ def main():
                 raw = client.get_email_content(id)
 
                 if not isinstance(raw, EmailMessage):
+                    print(raw)
+                    print(type(raw))
                     raise RuntimeError("error getting email")
 
                 parser = EmailParser()
@@ -32,7 +40,7 @@ def main():
 
                 info = parser.get_info(email)
                 if info.get("is_application"):
-                    print(info)
+                    db.add_application(info, email)
 
         else:
             print("Env error")
