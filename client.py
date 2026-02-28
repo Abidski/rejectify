@@ -17,13 +17,25 @@ class EmailClient:
         if connection[0] != "OK":
             print("ERROR CONNECTING TO EMAIL")
 
+    # Method generated from claude code
+    def get_email_fingerprint(self, raw):
+        # Message-ID is unique per email, set by the sending server
+        message_id = raw.get("Message-ID", "")
+
+        if message_id:
+            return message_id.strip()
+
+        # fallback: hash subject + from + date if no Message-ID
+        raw = f"{raw.get('Subject', '')}{raw.get('From', '')}{raw.get('Date', '')}"
+        return hashlib.md5(raw.encode()).hexdigest()
+
     def get_email_ids(self):
         if self.client is None:
             raise RuntimeError("Cannot establish client")
 
         _ = self.client.select("INBOX", readonly=True)
 
-        _, mail = self.client.search(None, '(SUBJECT "application")')
+        _, mail = self.client.search(None, 'TEXT "application"')
         mailId = mail[0].split()
 
         return mailId
