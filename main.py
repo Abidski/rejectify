@@ -39,6 +39,7 @@ def main():
                 fingerprint = client.get_email_fingerprint(raw)
                 if local_db.is_processed(fingerprint):
                     continue
+                local_db.mark_processed(fingerprint)
                 parser = EmailParser()
                 email = parser.parse_email(raw)
 
