@@ -130,7 +130,8 @@ class ApplicationDB:
         required_fields = [company, position, rejection, status]
 
         if any(field is None for field in required_fields):
-            raise RuntimeError("Missing field in order to add to database")
+            return
+            # raise RuntimeError("Missing field in order to add to database")
         self.add_company(info)
 
         try:
