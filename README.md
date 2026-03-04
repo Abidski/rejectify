@@ -1,6 +1,6 @@
 # rejectify
 
-A Python script that goes through your email and tracks your job applications.
+A Python script that tracks job applications by automated email parsing with LLM and stored in PostgreSQL database.
 
 ## tools
 * PostgreSQL
